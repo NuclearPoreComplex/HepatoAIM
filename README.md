@@ -1,9 +1,9 @@
-# <span style="font-size:larger;">【C4AI】HepatoAIM——基于神经网络的肝癌药物重定位
+# <span style="font-size:larger;">HepatoAIM——基于神经网络的肝癌药物重定位
 </span>
 
 ## 目录
 
-- [【C4AI】HepatoAIM——基于神经网络的肝癌药物重定位](#c4aihepatoaim基于神经网络的肝癌药物重定位)
+- [HepatoAIM——基于神经网络的肝癌药物重定位](#c4aihepatoaim基于神经网络的肝癌药物重定位)
   - [目录](#目录)
   - [项目背景](#项目背景)
   - [模型介绍](#模型介绍)
@@ -121,7 +121,7 @@
 
 ## 示例视频
 
-[示例视频：【CA-AI参赛作品】HepatoAIM——基于神经网络的肝癌药物重定位](https://www.bilibili.com/video/BV14C23YKEBq/?spm_id_from=333.999.0.0)
+[示例视频：HepatoAIM——基于神经网络的肝癌药物重定位](https://www.bilibili.com/video/BV14C23YKEBq/?spm_id_from=333.999.0.0)
 
 ## 环境配置
 
