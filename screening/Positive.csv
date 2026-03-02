@@ -1,0 +1,5 @@
+ID,SMILES
+CHEMBL3957356,CCC[C@H](c1ccc(C(=O)NCCC(=O)O)cc1)C(c1ccc(OC(F)(F)F)cc1)c1csc2c(C#N)cc(Cl)cc12
+CHEMBL4445123,Cc1cc(O)c(-c2ccc([C@@H](C)CN)cc2)c2c1[nH]c(=O)c1ccccc12
+CHEMBL3912251,Cc1cc(C(=O)O)ccc1COc1cc2c(cc1N(CC(C)C)S(=O)(=O)c1nccs1)CCC2
+CHEMBL3813873,FC(F)(F)c1ccc(CNc2ccc(Cc3c[nH]c4ncc(Cl)cc34)cn2)cn1
