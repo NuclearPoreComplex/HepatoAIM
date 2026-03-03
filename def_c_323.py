@@ -19,10 +19,6 @@ import seaborn as sns
 
 import glob
 
-# 假设 get_tg_bert 是一个函数，用于获取预加载的 BERT 结果
-#from get_tg_token import get_tg_bert
-# 平台环境运行不了 tensorflow 无法调用，调用预加载的 bert 结果
-from protein_bert_pre import load_bert as get_tg_bert
 #靶点序列
 target_seq_pth={
     'CHEMBL1811':'P34995.fasta',
@@ -1015,4 +1011,5 @@ class Grade_c:
         if self.t < 3:
             plt.show()
         # 关闭图形
+
         plt.close()
