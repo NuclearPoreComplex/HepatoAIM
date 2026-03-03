@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 
 from def_c_323 import Class_Bert_NN
+#from Class_Bert_NN import Class_Bert_NN
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

@@ -19,6 +19,7 @@ import seaborn as sns
 
 import glob
 
+
 #靶点序列
 target_seq_pth={
     'CHEMBL1811':'P34995.fasta',
@@ -1011,5 +1012,4 @@ class Grade_c:
         if self.t < 3:
             plt.show()
         # 关闭图形
-
         plt.close()
