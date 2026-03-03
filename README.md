@@ -1,319 +1,515 @@
-# <span style="font-size:larger;">HepatoAIM——基于神经网络的肝癌药物重定位
-</span>
+ # HepatoAIM: A Multimodal Deep Learning System for Hepatocellular Carcinoma Drug-Target Interaction Prediction
 
-## 目录
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
+[![TorchGeometric](https://img.shields.io/badge/TorchGeometric-2.3+-3b82f6.svg)](https://pytorch-geometric.readthedocs.io/)
+[![RDKit](https://img.shields.io/badge/RDKit-2023+-green.svg)](https://www.rdkit.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-- [HepatoAIM——基于神经网络的肝癌药物重定位](#c4aihepatoaim基于神经网络的肝癌药物重定位)
-  - [目录](#目录)
-  - [项目背景](#项目背景)
-  - [模型介绍](#模型介绍)
-    - [模型优越性](#模型优越性)
-    - [数据收集](#数据收集)
-    - [主要模块](#主要模块)
-    - [模型训练](#模型训练)
-    - [模型评估](#模型评估)
-  - [示例视频](#示例视频)
-  - [环境配置](#环境配置)
-  - [开始](#开始)
-    - [数据导入](#数据导入)
-    - [数据预处理](#数据预处理)
-    - [导入训练模块](#导入训练模块)
-    - [筛选函数](#筛选函数)
-    - [运行时交互](#运行时交互)
-  - [总结](#总结)
+> **Publication**: Drug Repurposing for Hepatocellular Carcinoma via Multimodal Neural Networks and Virtual Screening
 
-## 项目背景
+---
 
-**（1）全球的医疗需求**
+## 📑 Table of Contents
 
-肝癌是高发的恶性肿瘤之一，其发病率和死亡率在许多国家和地区居高不下。传统的治疗手段如手术、化疗和放疗等，往往效果有限，且伴随副作用与预后复发等情况。因此，寻找更有效、更安全的治疗手段成为迫切的需求。
+- [HepatoAIM: A Multimodal Deep Learning System for Hepatocellular Carcinoma Drug-Target Interaction Prediction](#hepatoaim-a-multimodal-deep-learning-system-for-hepatocellular-carcinoma-drug-target-interaction-prediction)
+  - [📑 Table of Contents](#-table-of-contents)
+  - [Key Features](#key-features)
+    - [1. Dual-Modal Fusion Architecture](#1-dual-modal-fusion-architecture)
+    - [2. Self-Supervised Contrastive Learning](#2-self-supervised-contrastive-learning)
+    - [3. End-to-End Drug Screening Pipeline](#3-end-to-end-drug-screening-pipeline)
+  - [System Architecture](#system-architecture)
+  - [Core Modules](#core-modules)
+    - [1. Data Preprocessing (`pre_data.py` / `pre_main.ipynb`)](#1-data-preprocessing-pre_datapy--pre_mainipynb)
+    - [2. Graph Neural Network Construction (`def_GNN.py`)](#2-graph-neural-network-construction-def_gnnpy)
+    - [3. Classification Model (`def_c_323.py` / `main.ipynb`/`def_cls317-1.ipynb`)](#3-classification-model-def_c_323py--mainipynbdef_cls317-1ipynb)
+    - [4. Evaluation \& Visualization (`Grade_c` Class)](#4-evaluation--visualization-grade_c-class)
+    - [5. Virtual Screening (`screening_c.py` / `screening_r.py`)](#5-virtual-screening-screening_cpy--screening_rpy)
+  - [Quick Start](#quick-start)
+    - [Environment Setup](#environment-setup)
+      - [Method 1: Using environment.yml (Recommended)](#method-1-using-environmentyml-recommended)
+      - [Method 2: Using requirements.txt](#method-2-using-requirementstxt)
+  - [Usage Guide](#usage-guide)
+    - [Method 1: Model Training (def\_cls317-1.ipynb)](#method-1-model-training-def_cls317-1ipynb)
+    - [Method 2: Data Preprocessing (pre\_main.ipynb)](#method-2-data-preprocessing-pre_mainipynb)
+    - [Method 3: Modular API (Compose in main.ipynb)](#method-3-modular-api-compose-in-mainipynb)
+  - [Project Structure](#project-structure)
 
-**（2）定量构效关系与深度学习技术的结合**
+---
 
-最新的研究进展显示，深度学习技术正在与QSAR建模相结合，推动了所谓的“深度QSAR”领域的发展。深度学习模型能够处理大规模复杂数据集，并从中识别复杂模式，这对于药物发现和化合物设计具有重要意义。深度生成和强化学习方法在分子设计中的应用，以及深度学习模型在基于结构的虚拟筛选中的使用，都是近期的研究热点。
+## Key Features
 
-**（3）个性化医疗的趋势**
+### 1. Dual-Modal Fusion Architecture
+- **Molecular Fingerprint Branch**: 12 molecular fingerprints (extracted via PaDELpy) → Transformer Encoder
+- **Molecular Graph Branch**: Molecular graph constructed via RDKit → TransformerConv + GAT → Global Average Pooling
+- **Fusion Strategy**: Multi-head cross-attention mechanism + learnable weighted concatenation (192-dimensional fused features)
 
-个性化医疗是当前医疗领域的热点，根据患者的具体情况（如基因型、表型、疾病阶段等）来定制治疗方案。在肝癌领域，通过分析特定的活性位点，可以更精准地设计针对不同患者亚群的药物，从而提高治疗效果和减少不良反应。
+### 2. Self-Supervised Contrastive Learning
+- **Dual-View Augmentation**: Random edge dropping (15%) + node feature masking (10%, mean imputation)
+- **Dynamic Loss Weighting**: λ = max(0.3×(1-epoch/300), 0.05)
+- **NT-Xent Loss**: Temperature coefficient τ=0.6, cosine similarity metric
 
-**（4）数据科学与AI的融合**
+### 3. End-to-End Drug Screening Pipeline
+- **Classification Model**: Predicts drug-target interaction probability (binary classification)
+- **Regression Model**: Predicts binding affinity values (IC50, Ki, Kd, etc.)
+- **Virtual Screening**: Large-scale FDA drug library screening + molecular docking validation
 
-近年来，数据科学和人工智能技术的快速发展为药物发现带来了新的机遇。AI技术，如机器学习、深度学习，能够在处理大规模生物医学数据、优化药物设计过程、提高预测准确性等方面发挥关键作用。
+---
 
-**（5）学术与产业的结合**
+## System Architecture
 
-团队在学习计算机辅助药物设计课程的过程中，不仅掌握了理论知识，还通过大学生创业相关实验将理论应用于实践。这种学术与产业的紧密结合，不仅能够促进知识转化，还能培养团队的创新能力和市场意识
-
-## 模型介绍
-
-### 模型优越性
-
-**（1）基于DNN的DTI筛选模型**
-
-基于深度神经网络（DNN）的药物-靶点作用（DTI）筛选模型相较于传统的机器学习模型，如基于随机森林的LRF-DTIs模型，具有更强的特征学习能力，以及在处理大规模和复杂数据集方面更为有效。DNN通过多层的非线性变换能够捕捉和学习数据中的复杂模式和关系，这在理解分子间的复杂相互作用方面具有显著优势。在新药筛选上，由于神经网络模型拥有更强的泛化能力，性能也更好。
-
-
-**（2）靶点与小分子双特征提取**
-
-相较于现有的DNN-DTI模型，如DEEPScreen、DEDTI等只学习了靶点对应的小分子特征，我们在模型训练时除了提取小分子特征还提取了靶蛋白特征，这增加了模型的复杂度，可以提供更全面的分子-靶标相互作用视图。这种综合方法可能有助于揭示分子与靶标之间更深层次的关系，从而提高预测的准确性和可靠性。
-
-### 数据收集
-
-**（1）数据准备**
-
-| 数据               | 来源 / 处理方法                           |
-| ------------------ | ----------------------------------------- |
-| 相关靶点           | ChemBL / 文献                             |
-| 活性分子查找       | ChemBL / PubChem                          |
-| 分子结构及分子处理 | Padelpy / RDKit / CCDC Python API |
-| 靶点序列 / 模型    | Uniprot / PDB                             |
-| 蛋白处理           | Protein-bert                              |
-| 数据清洗           | sklearn                                   |
-| 模型构建           | PaddlePaddle                              |
-
-**（2）靶点确定**
-- 使用chembl数据库查询“Liver cancer cell”对应智人相关靶点，并通过查阅文献进行验证与筛选，在数据清洗后确定了如下四个靶点。
-
-| 中文                    | English                               | CHEMBL ID  | 怎样抑制癌症（抑制or激活） |
-| ----------------------- | ------------------------------------- | ---------- | -------------------------- |
-| 胰高血糖素受体          | Glucagon receptor                     | CHEMBL1985 | 激活                       |
-| PDZ结合激酶             | PDZ-binding kinase                    | CHEMBL4896 | 抑制                       |
-| 酪氨酸蛋白激酶受体 FLT3 | Tyrosine-protein kinase receptor FLT3 | CHEMBL1974 | 抑制                       |
-| 前列腺素类EP1受体       | Prostanoid EP1 receptor               | CHEMBL1811 | 抑制                       |
-
-
-
-### 主要模块
-
-**（1）分子处理模块**
-
-经过Python的第三方库Padelpy进行12种分子指纹提取
-
-通过低方差滤波得到分子描述符数据集
-
-**（2）蛋白处理模块**
-
-通过Protein-bert模型提取蛋白序列氨基酸的全局特征
-
-通过卷积层、池化层、全连接层等对序列进行初步处理
-
-**（3）融合模块**
-
-将上述模块结合输出，通过不同的标签构筑分类模型和回归模型。
-
-通过蛋白和小分子特征数据的结合，可以提高模型的预测准确性和鲁棒性。
-
-### 模型训练
-
-- 对于分类模型，计算了准确率、召回率、精确度、F2、Matthews 相关系数 （MCC） 和 ROC 曲线下面积 （AUC）同时绘出了模型分类性能散点图与混淆矩阵。
-
-- 对于回归模型，计算了决定系数（R²）、均方误差（MSE）、均方根误差（RMSE）和平均绝对误差（MAE）。
-
-- 对于每一轮训练的模型参数都将被保存，以便最终得到最优解。我们最终以准确率，F2，AUC均一化后加权打分最小为分类模型的最优模型，以MSE，R²均一化后加权打分最大为回归模型的最优模型
-
-### 模型评估
-- 对于分类模型，该模型包含2个隐藏层，每个隐藏层有 100个神经元，具有 ReLu 激活函数、Adam 优化器、0.001学习率和批量归一化。计算了准确率（accuracy）、召回率（recall）、精确度（precision）、F2函数（我们在精准率和召回率中更加侧重召回率，FB eta的一种特殊形式）、Matthews 相关系数 （MCC） 和 ROC 曲线下面积 （AUC）同时绘出了模型分类性能散点图与混淆矩阵。在机器学习中，混淆矩阵（Confusion Matrix）是一种用来评估分类模型性能的工具，通过对比实际标签和预测标签来展示模型在各个类别上的表现，True Positives (TP)为模型正确预测为正类的样本数量，False Positives (FP)为模型错误预测为正类的样本数量，True Negatives (TN)为模型正确预测为负类的样本数量，False Negatives (FN)为模型错误预测为负类的样本数量。对应混淆矩阵的四个值作散点图分析模型分类性能，分散程度越大表明效果越好。
-
-- 对于回归模型，决定系数（R²）用于衡量模型的拟合优度，表示模型解释的变异性占总变异性的比例，R²值越接近1，表明模型的解释能力越强，预测值与实际值之间的差异越小。均方误差（MSE）是预测值与实际值之间差的平方的平均值，是衡量模型预测精度的一个指标，MSE值越小，表示模型的预测误差越小。均方根误差（RMSE）是MSE的算术平方根，与原始数据具有相同的单位，因此更易于解释。RMSE同样是衡量模型预测精度的指标，与MSE一样，RMSE值越小，模型的预测性能越好。平均绝对误差（MAE）是预测值与实际值之间差的绝对值的平均值。这些指标共同提供了模型性能的多维评估。
-
-- 对于每一轮训练的模型参数都将被保存，以便最终得到最优解。我们最终以准确率，F2，AUC均一化后加权打分最小为分类模型的最优模型，以MSE，R²均一化后加权打分最大为回归模型的最优模型。
-
-
-## 示例视频
-
-[示例视频：HepatoAIM——基于神经网络的肝癌药物重定位](https://www.bilibili.com/video/BV14C23YKEBq/?spm_id_from=333.999.0.0)
-
-## 环境配置
-
-
-```python
-!conda create -n HepatoAIM python=3.9 --yes
-!conda activate HepatoAIM
-
-#!pip install -r requirements.txt --yes
-!python -m pip install paddlepaddle-gpu==3.0.0b1 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/ --timeout 100 --yes
-!pip install padelpy
-!pip install seaborn
-!pip install biopython
-!pip install scipy
-!pip install -U scikit-learn
+```
+HepatoAIM/
+├── Data Preprocessing Layer (pre_data.py / pre_main.ipynb)
+│   ├── ChEMBL data cleaning and standardization
+│   ├── 12 molecular fingerprint extraction (PaDELpy)
+│   ├── Low-variance feature filtering (VarianceThreshold=0.5)
+│   └── Data merging and format conversion
+│
+├── Graph Construction Layer (def_GNN.py)
+│   ├── SMILES → Molecular graph conversion (RDKit)
+│   ├── 3D conformer generation (MMFF/UFF optimization)
+│   ├── Node features: 15-dimensional atomic properties
+│   │   ├── Atomic number, degree, charge, hybridization, aromaticity
+│   │   ├── Electronegativity, ring information, chirality, hydrogen count
+│   │   └── Valence electrons, bond length
+│   └── Edge features: 7-dimensional bond properties
+│       ├── Bond type, conjugation, ring membership
+│       ├── Stereochemistry, aromaticity
+│       └── Charge difference, bond length
+│
+├── Model Training Layer (main.ipynb / def_c_323.py)
+│   ├── Classification Model (def_c_323.py / def_c_322.py / def_c_313.py)
+│   │   ├── Dual-modal encoder
+│   │   ├── Contrastive learning projection head
+│   │   └── Early stopping (patience=150)
+│   └── Regression Model (train_c.py / def_for_re.py)
+│       └── Bioactivity value prediction
+│
+├── Screening Application Layer (screening_c.py / screening_r.py)
+│   ├── Classification Screening (screening_c.py)
+│   │   └── Predicts drug-target interaction probability
+│   └── Regression Screening (screening_r.py)
+│       └── Predicts binding affinity values
+│
+└── Utility Layer
+    ├── Protein feature extraction (protein_bert_pre.py)
+    ├── SMILES processing tools (add_smiles.py / add_smiles_s.py)
+    └── Model evaluation and visualization
 ```
 
+---
 
-    运行具有“base (Python 3.9.13)”的单元格需要ipykernel包。
+## Core Modules
 
+### 1. Data Preprocessing (`pre_data.py` / `pre_main.ipynb`)
 
-    运行以下命令，将 "ipykernel" 安装到 Python 环境中。
+**Class**: `pre_date`
 
+| Method | Function |
+|:---|:---|
+| `log_in_data(target)` | Imports ChEMBL data, performs cleaning and standardization |
+| `pre_figure_class(target)` | Classification data preprocessing (IC50/AC50/Kd50, etc.) |
+| `pre_figure_regression(target)` | Regression data preprocessing (grouped by Standard Type) |
+| `fged()` | Core fingerprint extraction function (PaDELpy) |
+| `figured(CRS='C')` | Executes fingerprint extraction (C=Classification, R=Regression) |
+| `figured_S(screening_name)` | Fingerprint extraction for screening datasets |
 
-    命令: "conda install -n base ipykernel --update-deps --force-reinstall"
-
-
-## 开始
-
-
-```python
-import os
-import sys
-
-# 将 work 文件夹添加到 sys.path
-sys.path.append(os.path.join(os.getcwd(), 'work'))
-# 检查当前工作目录
-print(os.getcwd())
-# 设置work目录为工作目录
-os.chdir('/home/aistudio/work')
+**Data Pipeline**:
+```
+Raw ChEMBL Data
+    ↓
+Data Cleaning (remove nulls, unit conversion, filter Type B assays)
+    ↓
+Activity Classification (median split: active/inactive) or Regression Labeling
+    ↓
+12 Fingerprint Extraction (AtomPairs2D, MACCS, PubChem, etc.)
+    ↓
+Low-Variance Filtering (threshold=0.5)
+    ↓
+Standardized CSV Output
 ```
 
-### 数据导入
+### 2. Graph Neural Network Construction (`def_GNN.py`)
+
+**Function**: `smiles_to_graph(df)`
+
+**Node Features** (15-dimensional):
+```python
+[
+    atom.GetAtomicNum(),           # Atomic number
+    atom.GetDegree(),              # Bond degree
+    atom.GetFormalCharge(),        # Formal charge
+    atom.GetHybridization(),       # Hybridization type
+    atom.GetIsAromatic(),          # Aromaticity
+    electronegativity,             # Electronegativity
+    atom.IsInRing(),               # Ring membership
+    atom.GetTotalDegree(),         # Total degree
+    atom.GetChiralTag().real,      # Chirality
+    atom.GetNumImplicitHs(),       # Implicit hydrogen count
+    atom.GetNumExplicitHs(),       # Explicit hydrogen count
+    atom.IsInRingSize(3),          # 3-membered ring
+    atom.IsInRingSize(4),          # 4-membered ring
+    atom.GetExplicitValence(),     # Explicit valence
+    atom.GetImplicitValence()      # Implicit valence
+]
+```
+
+**Edge Features** (7-dimensional):
+```python
+[
+    bond.GetBondTypeAsDouble(),    # Bond type
+    bond.GetIsConjugated(),        # Conjugation
+    bond.IsInRing(),               # Ring membership
+    bond.GetStereo(),              # Stereochemistry
+    bond.GetIsAromatic(),          # Aromaticity
+    charge_diff,                   # Electronegativity difference
+    bond_length                    # Bond length (calculated from 3D coordinates)
+]
+```
+
+**3D Conformer Generation Strategy**:
+1. Attempt MMFF optimization
+2. Fallback to UFF optimization if MMFF fails
+3. Generate 2D coordinates if both fail
+
+### 3. Classification Model (`def_c_323.py` / `main.ipynb`/`def_cls317-1.ipynb`)
+
+**Class**: `Class_Bert_NN`
+
+```python
+Class_Bert_NN(
+    tg,                    # Target ID
+    descriptor_size,       # Fingerprint dimension
+    test_num,              # Complexity level (0-8)
+    num_classes=2          # Binary classification
+)
+```
+
+**Architecture Details**:
+
+| Component | Configuration |
+|:---|:---|
+| **Fingerprint Encoder** | Linear(descriptor_size→64) + LayerNorm + GELU |
+| | + (test_num+1)×TransformerEncoderLayer(d_model=64, nhead=2) |
+| **Graph Encoder** | TransformerConv(15→64, heads=2) + LayerNorm |
+| | + Learnable residual connection (res_weight) |
+| | + GATConv(128→64) + Global Average Pooling |
+| **Fusion Layer** | MultiheadAttention(embed_dim=64, num_heads=4) |
+| | + Learnable weighted concatenation (fused_feat_weight, desc_feat_weight, graph_feat_weight) |
+| **Classification Head** | Linear(192→512) + GELU + LayerNorm + Dropout(0.01) |
+| | + Linear(512→num_classes) + Sigmoid |
+| **Projection Head** | Linear(192→512) + GELU + LayerNorm + Dropout(0.3) |
+| | + Linear(512→256) + GELU + LayerNorm |
+| | + Linear(256→64) |
+
+**Contrastive Learning Loss** (`ContrastiveLoss`):
+```python
+# NT-Xent loss implementation
+sim_matrix = cosine_sim(z.unsqueeze(1), z.unsqueeze(0)) / temperature
+labels = torch.cat([torch.arange(batch_size)+batch_size, torch.arange(batch_size)])
+loss = F.cross_entropy(sim_matrix.masked_fill(eye_mask, -inf), labels)
+```
+
+**Training Configuration**:
+- Optimizer: AdamW (lr=1e-4, weight_decay=0.1)
+- Learning Rate Scheduler: OneCycleLR
+- Gradient Clipping: max_norm=1.0
+- Early Stopping: patience=150
+- Batch Size: 64
+- Train/Test Split: 0.5/0.5 (low-sample targets) or 0.8/0.2
+
+**Data Augmentation** (`Train_C_Data`):
+```python
+# Online graph augmentation, generating dual views
+def apply_graph_augmentation(graph_data):
+    edge_index = drop_edge(graph_data.edge_index, p=0.15)  # Random edge dropping
+    masked_x, _ = mask_node(graph_data.x, p=0.1)            # Random node masking
+    return Data(x=masked_x, edge_index=edge_index, edge_attr=graph_data.edge_attr)
+```
+
+### 4. Evaluation & Visualization (`Grade_c` Class)
+
+**Evaluation Metrics**:
+- Accuracy, Precision, Recall
+- F2-Score (β=2, emphasizing recall)
+- AUC, MCC
+
+**Optimal Model Selection**:
+```python
+# Normalized weighted average: 0.4×F2 + 0.2×Accuracy + 0.4×AUC
+weights = [0.4, 0.2, 0.4]
+best_index = argmax(weighted_average)
+```
+
+**Visualization Output** (9-panel SVG):
+1. Loss curves (train/validation)
+2. Accuracy curves
+3. Precision curves
+4. Recall curves
+5. AUC curves
+6. MCC curves
+7. Contrastive feature cosine similarity heatmap (hierarchical clustering)
+8. Training set confusion matrix
+9. Test set confusion matrix
+
+### 5. Virtual Screening (`screening_c.py` / `screening_r.py`)
+*Note: Preprocessing of screening datasets is required before screening*
+
+**Classification Screening Pipeline**:
+```python
+def screen_c_tg_list(screening_data_pth, target_list):
+    for tg in target_list:
+        # Load pretrained model
+        model.load_state_dict(torch.load(f'./best_model/{tg}_classify_best_model.pth'))
+        # Predict interaction probability
+        out = screen_for_c(tg, screening_pth)  # Output: [batch_size, 2] probability distribution
+        # Merge results
+        df_out[tg] = out[:, 1]  # Extract positive class probability
+    return df_out
+```
+
+**Regression Screening Pipeline**:
+```python
+def screen_for_r_put_out(out, tg_value_type):
+    for tg, types in tg_value_type.items():
+        # Filter high-confidence samples (probability>0.95)
+        high_score_df = out[out[tg] > 0.95]
+        for type00 in types:  # IC50, Ki, Kd, etc.
+            predictions = screen_for_r(tg, selected_rows, type00)
+        # Save predictions for each target and each type
+    return result_r_{tg}.csv
+```
+
+---
+
+## Quick Start
+
+> **⚠️ Important**: ChEMBL data preprocessing is complete; you can directly use `main.ipynb` for training. To reprocess data or handle new targets, use `pre_main.ipynb`
+
+### Environment Setup
+
+#### Method 1: Using environment.yml (Recommended)
+
+```bash
+# Create new environment named hepatoaim
+conda env create -f environment.yml -n hepatoaim
+
+# Activate environment
+conda activate hepatoaim
+```
+
+#### Method 2: Using requirements.txt
 
 
+```bash
+# 1. Create base Python environment first
+conda create -n hepatoaim python=3.9
+
+# 2. Activate environment
+conda activate hepatoaim
+
+# 3. Install dependencies
+pip install -r requirements.txt
+```
+
+> **Note**: This method may miss some dependencies; `environment.yml` is recommended
+
+
+---
+
+## Usage Guide
+
+### Method 1: Model Training (def_cls317-1.ipynb)
+
+**Use Case**: Quick start for model training, reproducing paper results
+
+**Prerequisites**: `./fingered_c_data/` directory contains preprocessed data (CHEMBL1811_cs_fg.csv, etc.)
+
+**Steps**:
+1. Open `main.ipynb`
+2. Execute cells in order:
+   - Import dependencies (`def_c_323` and other modules)
+   - Configure training parameters (target, epochs, learning rate, etc.)
+   - Launch training (automatically executes `train_cls`)
+   - View evaluation results (auto-generates 9-panel charts)
+3. Check outputs:
+   - Best model weights: `./model/{tg}_classify_best_model_{t}.pth`
+   - Performance metrics: `./model/{tg}_classify_best_model_performance_{test_num}_{t}.txt`
+   - Training visualization: `./train_c_putouts/{tg}_combined1_plots_{test_num}_{t}.svg`
+
+**Quick Training Example**:
+```python
+from def_c_323 import train_cls
+import torch
+
+# Train GCGR target
+results, model = train_cls(
+    size=0.5,                    # Training set ratio
+    tg='CHEMBL1985',             # Target ID
+    train_epochs=800,            # Training epochs
+    device=torch.device('cuda:0'),
+    test_num=0,                  # Complexity level (0-8)
+    batch_size=64,
+    loss_fn=torch.nn.CrossEntropyLoss(),
+    num_classes=2,
+    l_r=1e-4,                    # Learning rate
+    t=1                          # Experiment repetition ID
+)
+```
+
+**Advantages**:
+- Ready to use out of the box, no preprocessing needed
+- Built-in optimal hyperparameters
+- Automatic early stopping and model selection
+
+---
+
+### Method 2: Data Preprocessing (pre_main.ipynb)
+
+**Use Cases**:
+- Adding new targets (non-CHEMBL1811/1974/1985/4896)
+- Re-extracting fingerprint features
+- Processing custom screening databases
+
+**Steps**:
+1. Open `pre_main.ipynb`
+2. Configure target list and paths:
 ```python
 from pre_data import pre_date
+
+# Configure new targets
+tg_list = ['CHEMBL1234', 'CHEMBL5678']  # New targets
+fg_list = ['AtomPairs2DCount', 'AtomPairs2D', 'EState', 'CDKextended', 
+           'CDK', 'CDKgraphonly', 'KlekotaRothCount', 'KlekotaRoth',
+           'MACCS', 'PubChem', 'SubstructureCount', 'Substructure']
+
+# Initialize preprocessor
+preprocessor = pre_date(
+    tg_list, 
+    "./targets/*.csv",           # Raw ChEMBL data path
+    fg_list, 
+    "./fingerprints_xml/*.xml"   # Fingerprint configuration files
+)
+```
+3. Execute preprocessing:
+```python
+# Classification data preprocessing
+preprocessor.figured(CRS='C')
+
+# Regression data preprocessing  
+preprocessor.figured(CRS='R')
+
+# Screening data preprocessing
+preprocessor.figured_S(screening_name='FDA_Drug_Library')
 ```
 
+**Output Results**:
+- Classification data: `./fingered_c_data/{tg}_cs_fg.csv`
+- Regression data: `./fingered_r_data/{tg}_r_fg.csv`
+- Screening data: `./fingered_s_data/{tg}_s_c_fg.csv`, etc.
 
+**Advantages**:
+- Visualized preprocessing workflow
+- Supports batch processing of multiple targets
+- Customizable fingerprint types and filtering thresholds
+
+---
+
+### Method 3: Modular API (Compose in main.ipynb)
+
+**Use Case**: Custom experimental workflows, batch processing, or modifying specific modules
+
+**Example: Complete Workflow**
 ```python
-tg_pth = "./targets/*.csv"
-tg_list = ['CHEMBL1811',
-            'CHEMBL1974',
-            'CHEMBL1985',
-            'CHEMBL4896',]
-fg_pth = "./fingerprints_xml/*.xml"
-fg_list = ['AtomPairs2DCount',
-            'AtomPairs2D',
-            'EState',
-            'CDKextended',
-            'CDK','CDKgraphonly',
-            'KlekotaRothCount','KlekotaRoth',
-            'MACCS',
-            'PubChem',
-            'SubstructureCount',
-            'Substructure']
-```
+# === Step 1: Preprocessing (if needed) ===
+from pre_data import pre_date
+preprocessor = pre_date(['CHEMBL1234'], "./targets/*.csv", fg_list, "./fingerprints_xml/*.xml")
+preprocessor.figured(CRS='C')
 
-### 数据预处理
-- 为项目展示速度仅处理text，其余数据已放入对应文件夹；
-- 描述符仅处理两个
+# === Step 2: Training ===
+from def_c_323 import train_cls
+results, model = train_cls(
+    size=0.8, tg='CHEMBL1234', train_epochs=500,
+    device=torch.device('cuda:0'), test_num=2,
+    batch_size=32, loss_fn=torch.nn.CrossEntropyLoss(),
+    num_classes=2, l_r=5e-5, t=1
+)
 
-
-```python
-if input('是否进行预处理：（Y/N）') == 'Y':
-    # 分子描述符处理函数,为项目展示速度仅处理text，其余数据已放入对应文件夹
-    # 描述符仅处理两个
-    print('正在对test.csv文件进行处理演示与处理过程')
-    print('为了节约时间描述符仅处理两个')
-    tg_list=['test']
-    fg_list=fg_list[0:2]
-    # 实例化预处理模型
-    pre_data_instance = pre_date(tg_list, tg_pth, fg_list, fg_pth)
-
-    if  input('是否进行分类模型数据预处理：（Y/N）') == 'Y':
-        #争对分类模型指纹化
-        pre_data_instance.figured(CRS = 'C')
-
-    if  input('是否进行回归模型数据预处理：（Y/N）') == 'Y':
-        #争对回归模型指纹化
-        pre_data_instance.figured(CRS = 'R')
-
-    if  input('是否进行筛选数据预处理：（Y/N）') == 'Y':
-        if input('是否使用默认筛选数据库（FDA-approved-Drug-Library）：（Y/N）') == 'N':
-            print('演示模型暂不支持自定义')
-            #筛选数据地址
-            screening_name='FDA-approved-Drug-Library-96-well'
-            #争对筛选数据指纹化
-            pre_data_instance.figured_S(screening_name)
-        else:
-            #筛选数据地址
-            screening_name='FDA-approved-Drug-Library-96-well'
-            #争对筛选数据指纹化
-            pre_data_instance.figured_S(screening_name)
-```
-
-### 导入训练模块
-
-- 蛋白靶点预测模块序调用如下方法**from get_tg_token import get_tg_bert**，
-
-    但是由于平台环境不兼容tensorflow无法调用，调用预加载的bert结果，
-
-    使用如下代码：**from protein_bert_pre import load_bert as get_tg_bert**
-
-* 若需要调用新的靶点蛋白数据自行训练时需要将**def_for_re.py**和**def_for_cls.py**中的代码进行更换
-
-
-```python
-from train_cls import train_cls
-from train_re import train_re
-```
-
-
-```python
-if input('是否进行分类模型训练：（Y/N）') == 'Y':
-    tg_list = ['CHEMBL1811',
-            'CHEMBL1974',
-            'CHEMBL1985',
-            'CHEMBL4896',]
-    train_epochs = int(input('train_epochs = （推荐100,若想快速结束可输入个位数）'))
-    for tg in tg_list:
-        train_cls(tg , train_epochs)#靶点训练
-
-if input('是否进行回归模型训练：（Y/N）') == 'Y':
-    tg_value_type={'CHEMBL1811':['IC50','Ki'],
-              'CHEMBL1974':['IC50','Activity','Inhibition','Kd'],
-               'CHEMBL1985':['IC50','Ki'],
-               'CHEMBL4896':['IC50','Thermal melting change'] }
-    train_epochs = int(input('train_epochs = （推荐100,若想快速结束可输入个位数）'))
-    for tg,types in tg_value_type.items():
-        for value_type in types:
-            print(f'进行靶点{tg}的{value_type}')
-            train_re(tg ,value_type , train_epochs)#靶点训练
-```
-
-### 筛选函数
-
-
-```python
+# === Step 3: Screening ===
+# Note: Use same structure as training data
 from screening_c import screen_c_tg_list
-from screening_r import screen_for_r_put_out
-import pandas as pd
-import paddle
+df_results = screen_c_tg_list('./screening/new_library.csv', ['CHEMBL1234'])
+
+# === Step 4: Prediction (high-confidence samples) ===
+from screening_c import screen_for_r_put_out
+tg_value_type = {'CHEMBL1234': ['IC50', 'Ki']}
+screen_for_c_put_out(df_results, tg_value_type)
 ```
 
+---
 
-```python
-if input('是否进行药物筛选：（Y/N）') == 'Y':
-    print('已导入默认药物库')
-    screening_data_pth = f'./screening/20240801-L1300-FDA-approved-Drug-Library-96-well.csv'
-    target_list=[
-            'CHEMBL1811',
-            'CHEMBL1974',
-            'CHEMBL1985',
-            'CHEMBL4896']
-    if input('是否进行过分类筛选：(Y/N)') == 'Y':
-        out =  pd.read_csv('result_c.csv')
-    else:
-        #筛选部分C
-        out = screen_c_tg_list(screening_data_pth,target_list)
-        #储存
-        out.to_csv('result_c.csv', index=False)#存档
-    print('药物-靶点有作用的概率如下，已保存至对应文件result_c.csv中')
-    print(out)
+## Project Structure
 
-    tg_value_type={'CHEMBL1811':['IC50','Ki'],
-                'CHEMBL1974':['IC50','Activity','Inhibition','Kd'],
-                'CHEMBL1985':['IC50','Ki'],
-                'CHEMBL4896':['IC50','Thermal melting change'] }
-    p = screen_for_r_put_out(out,tg_value_type)
-    print(p)
-
-print('结束模型体验')
 ```
-
-
-### 运行时交互
-- 是否进行预处理：（Y/N） Y
-- 正在对test.csv文件进行处理演示与处理过程
-- 为了节约时间描述符仅处理两个
-- 是否进行分类模型数据预处理：（Y/N） Y
-
-## 总结
-本项目利用PaddlePaddle搭建了基于DNN的DTI筛选模型，利用了深度学习在处理复杂生物医学数据上的优势,提高了肝癌靶向药物发现的效率和针对性。未来,该系统可为制药企业、医疗机构等提供有价值的辅助决策支持,在促进个性化治疗、加速新药研发等方面具有一定的前景。
+HepatoAIM/
+├── README.md
+├── requirements.txt
+│
+├── 📓 Jupyter Notebooks
+│   ├── main.ipynb                   ⭐ Model Training (Recommended, preprocessing complete)
+│   └── pre_main.ipynb               🔧 Data Preprocessing (Add new targets or reprocess)
+│
+├── data/
+│   ├── targets/                    # Raw ChEMBL data
+│   │   ├── CHEMBL1811.csv
+│   │   ├── CHEMBL1974.csv
+│   │   ├── CHEMBL1985.csv
+│   │   └── CHEMBL4896.csv
+│   ├── fingerprints_xml/           # PaDELpy fingerprint configuration files
+│   ├── screening/                  # Screening databases
+│   └── saved_bert_data/            # Pre-computed protein features
+│
+├── processed_data/
+│   ├── fingered_c_data/            # ⭐ Classification fingerprint data (generated, ready to use)
+│   │   ├── CHEMBL1811_cs_fg.csv
+│   │   ├── CHEMBL1974_cs_fg.csv
+│   │   ├── CHEMBL1985_cs_fg.csv
+│   │   └── CHEMBL4896_cs_fg.csv
+│   ├── fingered_r_data/            # Regression fingerprint data
+│   ├── fingered_r_data_dd/         # Regression data split by type
+│   └── fingered_s_data/            # Screening data fingerprints
+│
+├── src/
+│   ├── pre_data.py                 # Data preprocessing main program
+│   ├── def_GNN.py                  # Graph neural network construction
+│   ├── def_c_323.py                # Classification model (latest, recommended)
+│   ├── def_c_322.py                # Classification model (stable version)
+│   ├── def_c_313.py                # Classification model (experimental version)
+│   ├── train_c.py                  # Regression model training
+│   ├── def_for_re.py               # Regression model definition
+│   ├── def_for_cls.py              # Classification model wrapper
+│   ├── screening_c.py              # Classification screening
+│   ├── screening_r.py              # Regression screening
+│   ├── protein_bert_pre.py         # Protein feature preloading
+│   ├── add_smiles.py               # SMILES merging tool
+│   └── add_smiles_s.py             # Screening data SMILES processing
+│
+├── models/
+│   ├── best_model/                 # Best model weights
+│   │   ├── CHEMBL1811_classify_best_model.pth
+│   │   ├── CHEMBL1974_classify_best_model.pth
+│   │   ├── CHEMBL1985_classify_best_model.pth
+│   │   └── CHEMBL4896_classify_best_model.pth
+│   └── checkpoints/                # Training checkpoints
+│
+├── results/
+│   ├── train_c_putouts/            # Training visualization SVGs
+│   ├── model_performance/          # Performance metric text files
+│   └── screening_results/          # Screening result CSVs
+│
+└── scripts/
+    ├── train_all_targets.py        # Batch training script
+    ├── evaluate_models.py          # Model evaluation
+    └── run_screening.py            # Execute virtual screening
+```
