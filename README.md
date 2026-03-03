@@ -8,6 +8,9 @@
 
 > **Publication**: Drug Repurposing for Hepatocellular Carcinoma via Multimodal Neural Networks and Virtual Screening
 
+> Computational experiments were performed on a laptop workstation equipped with an NVIDIA GeForce RTX 3060 Laptop GPU (6 GB VRAM, driver version 566.07,CUDA 12.7), a 12th Gen Intel Core i7-12700H processor (14 cores: 6 P-cores + 8 E-cores), and 16 GB DDR4 system memory, running Windows 11.
+
+
 ---
 
 ## 📑 Table of Contents
@@ -362,6 +365,8 @@ results, model = train_cls(
 - Ready to use out of the box, no preprocessing needed
 - Built-in optimal hyperparameters
 - Automatic early stopping and model selection
+
+`Typical training time was approximately [18] min per target for 800 epochs.`
 
 ---
 
