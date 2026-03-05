@@ -1,0 +1,7 @@
+receptor = 1811.pdbqt
+center_x = -40.426
+center_y = -12.902
+center_z = 35.321
+size_x = 82.0
+size_y = 62.0
+size_z =114.0
